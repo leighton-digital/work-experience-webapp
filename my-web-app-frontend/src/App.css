@@ -1,0 +1,99 @@
+/* App.css */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  color: #333;
+}
+
+.add-form, .edit-form {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+}
+
+.add-form h2, .edit-form h2 {
+  color: #333;
+}
+
+.add-form form, .edit-form form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.add-form label, .edit-form label {
+  margin: 10px 0;
+}
+
+.add-form input, .edit-form input {
+  padding: 8px;
+  width: 100%;
+  margin: 5px 0;
+  border: 1px solid #ddd;
+}
+
+.add-form button, .edit-form button {
+  padding: 10px 20px;
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+.add-form button[type="submit"], .edit-form button[type="submit"] {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+}
+
+.add-form button[type="button"], .edit-form button[type="button"] {
+  background-color: #f44336;
+  color: white;
+  border: none;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.users-table th, .users-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.users-table th {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.users-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.users-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.edit-button, .delete-button {
+  padding: 6px 12px;
+  margin: 0 5px;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.delete-button {
+  background-color: #f44336;
+  color: white;
+}
