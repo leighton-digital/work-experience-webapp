@@ -1,48 +1,71 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import "./App.css";
 
 const App = () => {
-  const [users, setUsers] = useState([]);
-  const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({ name: '', email: '' });
-  const [newUser, setNewUser] = useState({ name: '', email: '' });
+  const [tasks, setTasks] = useState([]);
+  const [editingTask, setEditingTask] = useState(null);
+  const [formData, setFormData] = useState({
+    taskTitle: "",
+    description: "",
+    dateDue: "",
+    status: "",
+  });
+  const [newTask, setNewTask] = useState({
+    taskTitle: "",
+    description: "",
+    dateDue: "",
+    status: "",
+  });
 
   useEffect(() => {
-    fetchUsers();
+    fetchTasks();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchTasks = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/users');
-      setUsers(response.data);
+      const response = await axios.get("http://localhost:3001/tasks");
+      setTasks(response.data);
     } catch (error) {
-      console.error('Error fetching users', error);
+      console.error("Error fetching tasks", error);
     }
   };
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3001/users/${id}`);
-      fetchUsers();
+      await axios.delete(`http://localhost:3001/tasks/${id}`);
+      fetchTasks();
     } catch (error) {
-      console.error('Error deleting user', error);
+      console.error("Error deleting task", error);
     }
   };
 
-  const handleEdit = (user) => {
-    setEditingUser(user);
-    setFormData({ name: user.name, email: user.email });
+  const handleEdit = (task) => {
+    setEditingTask(task);
+    setFormData({
+      taskTitle: task.taskTitle,
+      description: task.description,
+      dateDue: task.dateDue,
+      status: task.status,
+    });
   };
 
   const handleUpdate = async () => {
     try {
-      await axios.put(`http://localhost:3001/users/${editingUser.id}`, formData);
-      setEditingUser(null);
-      setFormData({ name: '', email: '' });
-      fetchUsers();
+      await axios.put(
+        `http://localhost:3001/tasks/${editingTask.id}`,
+        formData
+      );
+      setEditingTask(null);
+      setFormData({
+        taskTitle: "",
+        description: "",
+        dateDue: "",
+        status: "",
+      });
+      fetchTasks();
     } catch (error) {
-      console.error('Error updating user', error);
+      console.error("Error updating user", error);
     }
   };
 
@@ -51,76 +74,119 @@ const App = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleNewUserInputChange = (e) => {
+  const handleNewTaskInputChange = (e) => {
     const { name, value } = e.target;
-    setNewUser({ ...newUser, [name]: value });
+    setNewTask({ ...newTask, [name]: value });
   };
 
-  const handleAddUser = async () => {
+  const handleAddTask = async () => {
     try {
-      await axios.post('http://localhost:3001/users', newUser);
-      setNewUser({ name: '', email: '' });
-      fetchUsers();
+      await axios.post("http://localhost:3001/tasks", newTask);
+      setNewTask({
+        taskTitle: "",
+        description: "",
+        dateDue: "",
+        status: "",
+      });
+      fetchTasks();
     } catch (error) {
-      console.error('Error adding user', error);
+      console.error("Error adding task", error);
     }
   };
 
   return (
     <div className="container">
-      <h1>User Management</h1>
-      
+      <h1>Task Management</h1>
+
       <div className="add-form">
-        <h2>Add New User</h2>
-        <form onSubmit={(e) => { e.preventDefault(); handleAddUser(); }}>
+        <h2>Add New Task</h2>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAddTask();
+          }}
+        >
           <label>
-            Name:
-            <input type="text" name="name" value={newUser.name} onChange={handleNewUserInputChange} />
+            Title:
+            <input
+              type="text"
+              name="taskTitle"
+              value={newTask.taskTitle}
+              onChange={handleNewTaskInputChange}
+            />
           </label>
           <label>
-            Email:
-            <input type="email" name="email" value={newUser.email} onChange={handleNewUserInputChange} />
+            Description:
+            <textarea
+              name="description"
+              onChange={handleNewTaskInputChange}
+              value={newTask.description}
+            />
           </label>
-          <button type="submit">Add User</button>
+          <button type="submit">Add Task</button>
         </form>
       </div>
 
-      <table className="users-table">
+      <table className="task-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Email</th>
+            <th>Task</th>
+            <th>Description</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
+          {tasks.map((task) => (
+            <tr key={task.id}>
+              <td>{task.taskTitle}</td>
+              <td>{task.description}</td>
               <td>
-                <button className="edit-button" onClick={() => handleEdit(user)}>Edit</button>
-                <button className="delete-button" onClick={() => handleDelete(user.id)}>Delete</button>
+                <button
+                  className="edit-button"
+                  onClick={() => handleEdit(task)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="delete-button"
+                  onClick={() => handleDelete(task.id)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {editingUser && (
+      {editingTask && (
         <div className="edit-form">
-          <h2>Edit User</h2>
-          <form onSubmit={(e) => { e.preventDefault(); handleUpdate(); }}>
+          <h2>Edit Task</h2>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdate();
+            }}
+          >
             <label>
-              Name:
-              <input type="text" name="name" value={formData.name} onChange={handleInputChange} />
+              Task:
+              <input
+                type="text"
+                name="name"
+                value={formData.taskTitle}
+                onChange={handleInputChange}
+              />
             </label>
             <label>
-              Email:
-              <input type="email" name="email" value={formData.email} onChange={handleInputChange} />
+              Description:
+              <textarea name="description" onChange={handleInputChange}>
+                {formData.description}
+              </textarea>
             </label>
             <button type="submit">Update</button>
-            <button type="button" onClick={() => setEditingUser(null)}>Cancel</button>
+            <button type="button" onClick={() => setEditingTask(null)}>
+              Cancel
+            </button>
           </form>
         </div>
       )}
