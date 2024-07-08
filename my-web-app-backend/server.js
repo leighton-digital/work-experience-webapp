@@ -1,9 +1,10 @@
-// server.js
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { v4: uuidv4 } = require('uuid');
-const setupSwagger = require('./swagger');
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const { v4: uuidv4 } = require("uuid");
+const setupSwagger = require("./swagger");
+const sqlite3 = require("sqlite3").verbose();
+const path = require("path");
 const app = express();
 const PORT = 3001;
 
@@ -12,151 +13,206 @@ app.use(bodyParser.json());
 
 setupSwagger(app);
 
-let users = [];
+// Initialize SQLite database and specify a file-based database
+const dbPath = path.resolve(__dirname, "data/tasks.db");
+const db = new sqlite3.Database(dbPath);
+
+// Create users table if it doesn't exist
+db.serialize(() => {
+  // Create tasks table
+  db.run(`CREATE TABLE IF NOT EXISTS tasks (
+    id TEXT PRIMARY KEY,
+    taskTitle TEXT NOT NULL,
+    description TEXT,
+    dateDue TEXT,
+    status TEXT,
+    createdDate TEXT NOT NULL
+  )`);
+});
 
 /**
  * @swagger
  * components:
  *   schemas:
- *     User:
+ *     Task:
  *       type: object
  *       required:
- *         - name
- *         - email
+ *         - taskTitle
  *       properties:
  *         id:
  *           type: string
- *           description: The auto-generated id of the user
- *         name:
+ *           description: The auto-generated id of the task
+ *         taskTitle:
  *           type: string
- *           description: The name of the user
- *         email:
+ *           description: The title of the task
+ *         description:
  *           type: string
- *           description: The email of the user
+ *           description: The description of the task
+ *         dateDue:
+ *           type: string
+ *           format: date
+ *           description: The due date of the task
+ *         status:
+ *           type: string
+ *           description: The status of the task (e.g., new, in progress, completed)
+ *         createdDate:
+ *           type: string
+ *           format: date-time
+ *           description: The date and time when the task was created
  *       example:
  *         id: d5fE_asz
- *         name: John Doe
- *         email: john@example.com
+ *         taskTitle: Sample Task
+ *         description: This is a sample task
+ *         dateDue: 2023-12-31
+ *         status: new
+ *         createdDate: 2023-01-01T12:00:00Z
  */
 
 /**
  * @swagger
- * tags:
- *   name: Users
- *   description: The users managing API
- */
-
-/**
- * @swagger
- * /users:
+ * /tasks:
  *   get:
- *     summary: Returns the list of all the users
- *     tags: [Users]
+ *     summary: Returns the list of all the tasks
+ *     tags: [Tasks]
  *     responses:
  *       200:
- *         description: The list of the users
+ *         description: The list of the tasks
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/User'
+ *                 $ref: '#/components/schemas/Task'
  */
-app.get('/users', (req, res) => {
-  res.json(users);
+app.get("/tasks", (req, res) => {
+  db.all("SELECT * FROM tasks", [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(rows);
+  });
 });
 
 /**
  * @swagger
- * /users:
+ * /tasks:
  *   post:
- *     summary: Create a new user
- *     tags: [Users]
+ *     summary: Create a new task
+ *     tags: [Tasks]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             $ref: '#/components/schemas/Task'
  *     responses:
  *       201:
- *         description: The user was successfully created
+ *         description: The task was successfully created
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/Task'
  *       500:
  *         description: Some server error
  */
-app.post('/users', (req, res) => {
-  const newUser = { id: uuidv4(), ...req.body };
-  users.push(newUser);
-  res.status(201).json(newUser);
+app.post("/tasks", (req, res) => {
+  const newTask = {
+    id: uuidv4(),
+    ...req.body,
+    createdDate: new Date().toISOString(),
+  };
+  const { id, taskTitle, description, dateDue, status, createdDate } = newTask;
+  db.run(
+    "INSERT INTO tasks (id, taskTitle, description, dateDue, status, createdDate) VALUES (?, ?, ?, ?, ?, ?)",
+    [id, taskTitle, description, dateDue, status, createdDate],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.status(201).json(newTask);
+    }
+  );
 });
 
 /**
  * @swagger
- * /users/{id}:
+ * /tasks/{id}:
  *   put:
- *     summary: Update an existing user
- *     tags: [Users]
+ *     summary: Update an existing task
+ *     tags: [Tasks]
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
  *         required: true
- *         description: The user id
+ *         description: The task id
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             $ref: '#/components/schemas/Task'
  *     responses:
  *       200:
- *         description: The user was updated
+ *         description: The task was updated
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/Task'
  *       404:
- *         description: The user was not found
+ *         description: The task was not found
  *       500:
  *         description: Some error happened
  */
-app.put('/users/:id', (req, res) => {
-  const userIndex = users.findIndex((user) => user.id === req.params.id);
-  if (userIndex !== -1) {
-    users[userIndex] = { ...users[userIndex], ...req.body };
-    res.json(users[userIndex]);
-  } else {
-    res.status(404).json({ message: 'User not found' });
-  }
+app.put("/tasks/:id", (req, res) => {
+  const { id } = req.params;
+  const { taskTitle, description, dateDue, status } = req.body;
+  db.run(
+    "UPDATE tasks SET taskTitle = ?, description = ?, dateDue = ?, status = ? WHERE id = ?",
+    [taskTitle, description, dateDue, status, id],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      res.json({ id, taskTitle, description, dateDue, status });
+    }
+  );
 });
 
 /**
  * @swagger
- * /users/{id}:
+ * /tasks/{id}:
  *   delete:
- *     summary: Remove the user by id
- *     tags: [Users]
+ *     summary: Remove the task by id
+ *     tags: [Tasks]
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
  *         required: true
- *         description: The user id
+ *         description: The task id
  *     responses:
  *       204:
- *         description: The user was deleted
+ *         description: The task was deleted
  *       404:
- *         description: The user was not found
+ *         description: The task was not found
  */
-app.delete('/users/:id', (req, res) => {
-  users = users.filter((user) => user.id !== req.params.id);
-  res.status(204).send();
+app.delete("/tasks/:id", (req, res) => {
+  const { id } = req.params;
+  db.run("DELETE FROM tasks WHERE id = ?", id, function (err) {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+    res.status(204).send();
+  });
 });
 
 app.listen(PORT, () => {
