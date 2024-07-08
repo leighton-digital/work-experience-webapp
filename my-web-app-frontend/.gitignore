@@ -1,1 +1,30 @@
-node_modules
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+logs/*
+
+# SQLite databases
+*.sqlite
+*.sqlite3
+*.db
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# Miscellaneous
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Coverage directory used by tools like istanbul
+coverage/
