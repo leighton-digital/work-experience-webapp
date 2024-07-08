@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 setupSwagger(app);
 
 // Initialize SQLite database and specify a file-based database
-const dbPath = path.resolve(__dirname, "data/tasks.db");
+const dbPath = path.resolve(__dirname, "tasks.db");
 const db = new sqlite3.Database(dbPath);
 
 // Create users table if it doesn't exist
@@ -121,6 +121,7 @@ app.post("/tasks", (req, res) => {
     ...req.body,
     createdDate: new Date().toISOString(),
   };
+  console.log(newTask);
   const { id, taskTitle, description, dateDue, status, createdDate } = newTask;
   db.run(
     "INSERT INTO tasks (id, taskTitle, description, dateDue, status, createdDate) VALUES (?, ?, ?, ?, ?, ?)",
