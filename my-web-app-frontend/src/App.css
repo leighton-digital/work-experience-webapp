@@ -37,6 +37,8 @@ h1 {
 
 .add-form textarea,
 .edit-form textarea,
+.add-form select,
+.edit-form select,
 .add-form input,
 .edit-form input {
   padding: 8px;
